@@ -31,6 +31,7 @@ class CronEnableJobCommand extends ContainerAwareCommand
         }
         
         $job->setEnabled(true);
+        $em->persist($job);
         $em->flush();
         
         $output->writeln("Enabled cron job by the name of " . $jobName);

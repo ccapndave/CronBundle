@@ -33,6 +33,7 @@ class CronDisableJobCommand extends ContainerAwareCommand
         }
         
         $job->setEnabled(false);
+        $em->persist($job);
         $em->flush();
         
         $output->writeln("Disabled cron job by the name of " . $jobName);
