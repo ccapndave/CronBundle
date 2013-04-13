@@ -1,14 +1,10 @@
 <?php
 namespace ColourStream\Bundle\CronBundle\Command;
 
-use Fusion\Framework\CronBundle\Entity\CronJobResult;
-
+use ColourStream\Bundle\CronBundle\Entity\CronJobResult;
 use Symfony\Component\Console\Output\OutputInterface;
-
 use Symfony\Component\Console\Input\InputInterface;
-
 use Symfony\Component\Console\Input\InputArgument;
-
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 
 class CronPruneLogsCommand extends ContainerAwareCommand
