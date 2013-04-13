@@ -24,7 +24,7 @@ class CronJobResult
     
     /**
      * @ORM\Column(type="datetime")
-     * @var DateTime $runAt
+     * @var \DateTime $runAt
      */
     protected $runAt;
     /**
@@ -68,7 +68,7 @@ class CronJobResult
     /**
      * Set runAt
      *
-     * @param datetime $runAt
+     * @param \DateTime $runAt
      */
     public function setRunAt($runAt)
     {
@@ -78,7 +78,7 @@ class CronJobResult
     /**
      * Get runAt
      *
-     * @return datetime 
+     * @return \DateTime
      */
     public function getRunAt()
     {
@@ -148,7 +148,7 @@ class CronJobResult
     /**
      * Set job
      *
-     * @param ColourStream\Bundle\CronBundle\Entity\CronJob $job
+     * @param \ColourStream\Bundle\CronBundle\Entity\CronJob $job
      */
     public function setJob(\ColourStream\Bundle\CronBundle\Entity\CronJob $job)
     {
@@ -158,7 +158,7 @@ class CronJobResult
     /**
      * Get job
      *
-     * @return ColourStream\Bundle\CronBundle\Entity\CronJob 
+     * @return \ColourStream\Bundle\CronBundle\Entity\CronJob
      */
     public function getJob()
     {

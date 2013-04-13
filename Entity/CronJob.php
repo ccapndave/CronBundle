@@ -34,7 +34,7 @@ class CronJob
     protected $interval;
     /**
      * @ORM\Column(type="datetime")
-     * @var DateTime $nextRun
+     * @var \DateTime $nextRun
      */
     protected $nextRun;
     /**
@@ -45,7 +45,7 @@ class CronJob
     
     /**
      * @ORM\OneToMany(targetEntity="CronJobResult", mappedBy="job", cascade={"remove"})
-     * @var ArrayCollection
+     * @var \Doctrine\Common\Collections\ArrayCollection
      */
     protected $results;
     /**
@@ -53,6 +53,7 @@ class CronJob
      * @var CronJobResult
      */
     protected $mostRecentRun;
+
     public function __construct()
     {
         $this->results = new \Doctrine\Common\Collections\ArrayCollection();
@@ -131,7 +132,7 @@ class CronJob
     /**
      * Set nextRun
      *
-     * @param datetime $nextRun
+     * @param \DateTime $nextRun
      */
     public function setNextRun($nextRun)
     {
@@ -141,7 +142,7 @@ class CronJob
     /**
      * Get nextRun
      *
-     * @return datetime 
+     * @return \DateTime
      */
     public function getNextRun()
     {
@@ -151,7 +152,7 @@ class CronJob
     /**
      * Add results
      *
-     * @param ColourStream\Bundle\CronBundle\Entity\CronJobResult $results
+     * @param \ColourStream\Bundle\CronBundle\Entity\CronJobResult $results
      */
     public function addCronJobResult(\ColourStream\Bundle\CronBundle\Entity\CronJobResult $results)
     {
@@ -161,7 +162,7 @@ class CronJob
     /**
      * Get results
      *
-     * @return Doctrine\Common\Collections\Collection 
+     * @return \Doctrine\Common\Collections\Collection
      */
     public function getResults()
     {
@@ -171,7 +172,7 @@ class CronJob
     /**
      * Set mostRecentRun
      *
-     * @param ColourStream\Bundle\CronBundle\Entity\CronJobResult $mostRecentRun
+     * @param \ColourStream\Bundle\CronBundle\Entity\CronJobResult $mostRecentRun
      */
     public function setMostRecentRun(\ColourStream\Bundle\CronBundle\Entity\CronJobResult $mostRecentRun)
     {
@@ -181,7 +182,7 @@ class CronJob
     /**
      * Get mostRecentRun
      *
-     * @return ColourStream\Bundle\CronBundle\Entity\CronJobResult 
+     * @return \ColourStream\Bundle\CronBundle\Entity\CronJobResult
      */
     public function getMostRecentRun()
     {
