@@ -1,19 +1,13 @@
 <?php
 namespace ColourStream\Bundle\CronBundle\Command;
+
 use Doctrine\ORM\EntityManager;
-
 use Symfony\Component\Console\Input\ArgvInput;
-
 use ColourStream\Bundle\CronBundle\Entity\CronJobResult;
-
 use ColourStream\Bundle\CronBundle\Entity\CronJob;
-
 use Symfony\Component\Console\Output\OutputInterface;
-
 use Symfony\Component\Console\Input\InputInterface;
-
 use Symfony\Component\Console\Input\InputArgument;
-
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 
 class CronRunCommand extends ContainerAwareCommand

@@ -1,5 +1,6 @@
 <?php
 namespace ColourStream\Bundle\CronBundle\Entity;
+
 use Doctrine\ORM\EntityRepository;
 
 class CronJobResultRepository extends EntityRepository
