@@ -71,7 +71,7 @@ Creating your own tasks with CronBundle couldn't be easier - all you have to do 
 use ColourStream\Bundle\CronBundle\Annotation\CronJob;
 
 /**
- * @CronJob("PT1H")
+ * @CronJob(interval="PT1H", start="2013-05-14 08:30:12", timezone="Europe/London")
  */
 class DemoCommand extends Command
 {
@@ -88,5 +88,16 @@ class DemoCommand extends Command
 }
 ```
 
-The interval spec ("PT1H" in the above example) is documented on the [DateInterval](http://au.php.net/manual/en/dateinterval.construct.php) documentation page, and can be modified whenever you choose.
-For your CronJob to be scanned and included in future runs, you must first run `app/console cron:scan` - it will be scheduled to run the next time you run `app/console cron:run`
+The interval spec (interval="PT1H" in the above example) is documented on the [DateInterval](http://au.php.net/manual/en/dateinterval.construct.php) documentation page, and can be modified whenever you choose. The text "interval" may be ommitted making the call just @CronJob("PT1H").
+
+The start spec (start="2013-05-14 08:30:12" in the above example) is the time and start to start your job, this must be in `Y-m-d H:i:s` format.
+If the start date has already past then the specified interval will be added to it until it is past the current time and date. This will default to the date/time that the scan was made.
+
+**default**: `now \DateTime()`
+
+The timezone spec (timezone="Europe/London" in the above example) is the timezone for the specified start date. The available timezones can be found on [List of Supported Timezones](http://php.net/manual/en/timezones.php) documentation page. This will default to the timezone on the server.
+
+**default**: `date_default_timezone_get()`
+
+For your CronJob to be scanned and included in future runs, you must first run `app/console cron:scan` - it will be scheduled to run the next time you run `app/console cron:run`.
+Changes will only be recognised when the interval has changed.
