@@ -1,40 +1,40 @@
 <?php
+
 namespace ColourStream\Bundle\CronBundle\Command;
 
 use ColourStream\Bundle\CronBundle\Entity\CronJob;
-use Doctrine\ORM\EntityManager;
-use Symfony\Component\Console\Command\Command;
 use ColourStream\Bundle\CronBundle\Annotation\CronJob as CronJobAnno;
-use Doctrine\Bundle\DoctrineBundle\Registry
-use Symfony\Component\Console\Output\OutputInterface;
+use Doctrine\ORM\EntityManager;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class CronScanCommand extends ContainerAwareCommand
 {
     protected function configure()
     {
         $this->setName("cron:scan")
-             ->setDescription("Scans for any new or deleted cron jobs")
-             ->addOption('keep-deleted', 'k', InputOption::VALUE_NONE, 'If set, deleted cron jobs will not be removed')
-             ->addOption('default-disabled', 'd', InputOption::VALUE_NONE, 'If set, new jobs will be disabled by default');
+            ->setDescription("Scans for any new or deleted cron jobs")
+            ->addOption('keep-deleted', 'k', InputOption::VALUE_NONE, 'If set, deleted cron jobs will not be removed')
+            ->addOption('default-disabled', 'd', InputOption::VALUE_NONE, 'If set, new jobs will be disabled by default');
     }
-    
+
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $keepDeleted = $input->getOption("keep-deleted");
         $defaultDisabled = $input->getOption("default-disabled");
         $em = $this->getContainer()->get('doctrine.orm.entity_manager');
-        
+
         // Enumerate the known jobs
         $jobRepo = $em->getRepository('ColourStreamCronBundle:CronJob');
         $knownJobs = $jobRepo->getKnownJobs();
         $knownJobs = array_fill_keys($knownJobs, true);
-        
+
         // Enumerate all the jobs currently loaded
         $reader = $this->getContainer()->get("annotation_reader");
-        
+
         foreach($this->getApplication()->all() as $command)
         {
             // Check for an @CronJob annotation
@@ -48,18 +48,17 @@ class CronScanCommand extends ContainerAwareCommand
                     {
                         // Clear it from the known jobs so that we don't try to delete it
                         unset($knownJobs[$job]);
-                        
+
                         // Update the job if necessary
                         $currentJob = $jobRepo->findOneByCommand($job);
                         $currentJob->setDescription($command->getDescription());
-                        if($currentJob->getInterval() != $anno->value)
+                        if($currentJob->getInterval() != $anno->interval)
                         {
-                            $newTime = new \DateTime();
-                            $newTime = $newTime->add(new \DateInterval($anno->value));
-                            
-                            $currentJob->setInterval($anno->value);
-                            $currentJob->setNextRun($newTime);
-                            $output->writeln("Updated interval for $job to {$anno->value}");
+                            $nextRun = $this->getNextRun($anno);
+
+                            $currentJob->setInterval($anno->interval);
+                            $currentJob->setNextRun($nextRun);
+                            $output->writeln("Updated interval for $job to {$anno->interval} with the next run at " . $nextRun->format('Y-m-d H:i:s'));
                         }
                     }
                     else
@@ -69,7 +68,7 @@ class CronScanCommand extends ContainerAwareCommand
                 }
             }
         }
-        
+
         // Clear any jobs that weren't found
         if(!$keepDeleted)
         {
@@ -80,21 +79,35 @@ class CronScanCommand extends ContainerAwareCommand
                 $em->remove($jobToDelete);
             }
         }
-        
+
         $em->flush();
         $output->writeln("Finished scanning for cron jobs");
     }
-    
+
+    protected function getNextRun(CronJobAnno $anno)
+    {
+        $now = new \DateTime();
+        $nextRun = \DateTime::createFromFormat('Y-m-d H:i:s', $anno->start, new \DateTimeZone($anno->timezone));
+
+        while ($nextRun < $now) {
+            $nextRun = $nextRun->add(new \DateInterval($anno->interval));
+        }
+
+        return $nextRun;
+    }
+
     protected function newJobFound(EntityManager $em, OutputInterface $output, Command $command, CronJobAnno $anno, $defaultDisabled = false)
     {
+        $nextRun = $this->getNextRun($anno);
+
         $newJob = new CronJob();
         $newJob->setCommand($command->getName());
         $newJob->setDescription($command->getDescription());
-        $newJob->setInterval($anno->value);
-        $newJob->setNextRun(new \DateTime());
+        $newJob->setInterval($anno->interval);
+        $newJob->setNextRun($nextRun);
         $newJob->setEnabled(!$defaultDisabled);
-        
-        $output->writeln("Added the job " . $newJob->getCommand() . " with interval " . $newJob->getInterval());
+
+        $output->writeln("Added the job " . $newJob->getCommand() . " with interval " . $newJob->getInterval() . " with the next run at " . $nextRun->format('Y-m-d H:i:s'));
         $em->persist($newJob);
     }
 }
