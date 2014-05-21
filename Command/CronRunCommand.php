@@ -21,10 +21,12 @@ class CronRunCommand extends ContainerAwareCommand
     
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->results = [];
+
         $start = microtime(true);
         $em = $this->getContainer()->get("doctrine.orm.entity_manager");
         $jobRepo = $em->getRepository('ColourStreamCronBundle:CronJob');
-        
+
         $jobsToRun = array();
         if($jobName = $input->getArgument('job'))
         {
@@ -46,7 +48,7 @@ class CronRunCommand extends ContainerAwareCommand
         {
             $jobsToRun = $jobRepo->findDueTasks();
         }
-        
+
         $jobCount = count($jobsToRun);
         $output->writeln("Running $jobCount jobs:");
         
@@ -54,8 +56,13 @@ class CronRunCommand extends ContainerAwareCommand
         {
             $this->runJob($job, $output, $em);
         }
-        
-        // Flush our results to the DB
+
+        // Finally persist the results
+        $em = $this->getContainer()->get("doctrine.orm.entity_manager");
+        foreach ($this->results as $jobId => $result) {
+            $em->persist($result);
+            $em->find('ColourStreamCronBundle:CronJob', $jobId)->setMostRecentRun($result);
+        }
         $em->flush();
         
         $end = microtime(true);
@@ -96,8 +103,10 @@ class CronRunCommand extends ContainerAwareCommand
             $jobOutput->writeln($ex->__toString());
         }
         $jobEnd = microtime(true);
-        
+
         // Clamp the result to accepted values
+        if (is_null($returnCode)) $returnCode = CronJobResult::SUCCEEDED;
+
         if($returnCode < CronJobResult::RESULT_MIN || $returnCode > CronJobResult::RESULT_MAX)
         {
             $returnCode = CronJobResult::FAILED;
@@ -120,7 +129,7 @@ class CronRunCommand extends ContainerAwareCommand
         
         $durationStr = sprintf("%0.2f", $jobEnd-$jobStart);
         $output->writeln("$statusStr in $durationStr seconds");
-        
+
         // Record the result
         $this->recordJobResult($em, $job, $jobEnd-$jobStart, $jobOutput->getOutput(), $returnCode);
         
@@ -138,9 +147,7 @@ class CronRunCommand extends ContainerAwareCommand
         $result->setRunTime($timeTaken);
         $result->setOutput($output);
         $result->setResult($resultCode);
-        
-        // Then update associations and persist it
-        $job->setMostRecentRun($result);
-        $em->persist($result);
+
+        $this->results[$job->getId()] = $result;
     }
 }
