@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 while true
 do
-    /usr/bin/env php ../app/console cron:run
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    /usr/bin/env php $DIR/../app/console cron:run
     sleep 15
 done
