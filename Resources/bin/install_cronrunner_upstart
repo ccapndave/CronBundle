@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+FILENAME="/etc/init/cronrunner.conf"
+echo -e "" > $FILENAME
+
+echo -e "description 'Runs the platypus cron daemon'\n" >> $FILENAME
+echo -e "respawn\n" >> $FILENAME
+echo -e "exec /vagrant/bin/cronrunner\n" >> $FILENAME
