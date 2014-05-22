@@ -17,7 +17,7 @@
         "doctrine/doctrine-bundle": "*"
     },
     "minimum-stability": "dev",
-    "bin": ["Resources/bin/cronrunner", "Resources/bin/install_cronrunner_upstart"],
+    "bin": ["bin/cronrunner"],
     "autoload": {
         "psr-0": { "ColourStream\\Bundle\\CronBundle": "" }
     },
