@@ -25,7 +25,7 @@ class CronEnableJobCommand extends ContainerAwareCommand
         if(!$job)
         {
             $output->writeln("Couldn't find a job by the name of " . $jobName);
-            return CronJobResult::FAILED;
+            return;
         }
         
         $job->setEnabled(true);

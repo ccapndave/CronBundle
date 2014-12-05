@@ -12,6 +12,12 @@ use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 
 class CronRunCommand extends ContainerAwareCommand
 {
+    const RESULT_MIN = 0;
+    const SUCCEEDED = 0;
+    const FAILED = 1;
+    const SKIPPED = 2;
+    const RESULT_MAX = 2;
+
     protected function configure()
     {
         $this->setName("cron:run")
@@ -21,8 +27,6 @@ class CronRunCommand extends ContainerAwareCommand
     
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->results = [];
-
         $start = microtime(true);
         $em = $this->getContainer()->get("doctrine.orm.entity_manager");
         $jobRepo = $em->getRepository('ColourStreamCronBundle:CronJob');
@@ -41,7 +45,7 @@ class CronRunCommand extends ContainerAwareCommand
             catch(\Exception $e)
             {
                 $output->writeln("Couldn't find a job by the name of $jobName");
-                return CronJobResult::FAILED;
+                return self::FAILED;
             }
         }
         else
@@ -57,14 +61,6 @@ class CronRunCommand extends ContainerAwareCommand
             $this->runJob($job, $output, $em);
         }
 
-        // Finally persist the results
-        $em = $this->getContainer()->get("doctrine.orm.entity_manager");
-        foreach ($this->results as $jobId => $result) {
-            $em->persist($result);
-            $em->find('ColourStreamCronBundle:CronJob', $jobId)->setMostRecentRun($result);
-        }
-        $em->flush();
-        
         $end = microtime(true);
         $duration = sprintf("%0.2f", $end-$start);
         $output->writeln("Cron run completed in $duration seconds");
@@ -78,10 +74,9 @@ class CronRunCommand extends ContainerAwareCommand
         {
             $commandToRun = $this->getApplication()->get($job->getCommand());
         }
-        catch(InvalidArgumentException $ex)
+        catch(\InvalidArgumentException $ex)
         {
             $output->writeln(" skipped (command no longer exists)");
-            $this->recordJobResult($em, $job, 0, "Command no longer exists", CronJobResult::SKIPPED);
 
             // No need to reschedule non-existant commands
             return;
@@ -97,7 +92,7 @@ class CronRunCommand extends ContainerAwareCommand
         }
         catch(\Exception $ex)
         {
-            $returnCode = CronJobResult::FAILED;
+            $returnCode = self::FAILED;
             $jobOutput->writeln("");
             $jobOutput->writeln("Job execution failed with exception " . get_class($ex) . ":");
             $jobOutput->writeln($ex->__toString());
@@ -105,49 +100,35 @@ class CronRunCommand extends ContainerAwareCommand
         $jobEnd = microtime(true);
 
         // Clamp the result to accepted values
-        if (is_null($returnCode)) $returnCode = CronJobResult::SUCCEEDED;
+        if (is_null($returnCode)) $returnCode = self::SUCCEEDED;
 
-        if($returnCode < CronJobResult::RESULT_MIN || $returnCode > CronJobResult::RESULT_MAX)
+        if($returnCode < self::RESULT_MIN || $returnCode > self::RESULT_MAX)
         {
-            $returnCode = CronJobResult::FAILED;
+            $returnCode = self::FAILED;
         }
-        
+
         // Output the result
         $statusStr = "unknown";
-        if($returnCode == CronJobResult::SKIPPED)
+        if($returnCode == self::SKIPPED)
         {
             $statusStr = "skipped";
         }
-        elseif($returnCode == CronJobResult::SUCCEEDED)
+        elseif($returnCode == self::SUCCEEDED)
         {
             $statusStr = "succeeded";
         }
-        elseif($returnCode == CronJobResult::FAILED)
+        elseif($returnCode == self::FAILED)
         {
             $statusStr = "failed";
         }
         
         $durationStr = sprintf("%0.2f", $jobEnd-$jobStart);
         $output->writeln("$statusStr in $durationStr seconds");
-
-        // Record the result
-        $this->recordJobResult($em, $job, $jobEnd-$jobStart, $jobOutput->getOutput(), $returnCode);
         
         // And update the job with it's next scheduled time
         $newTime = new \DateTime();
         $newTime = $newTime->add(new \DateInterval($job->getInterval()));
         $job->setNextRun($newTime);
     }
-    
-    protected function recordJobResult(EntityManager $em, CronJob $job, $timeTaken, $output, $resultCode)
-    {
-        // Create a new CronJobResult
-        $result = new CronJobResult();
-        $result->setJob($job);
-        $result->setRunTime($timeTaken);
-        $result->setOutput($output);
-        $result->setResult($resultCode);
 
-        $this->results[$job->getId()] = $result;
-    }
 }

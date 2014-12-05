@@ -15,7 +15,7 @@ class CronJob
      * @var integer $id
      */
     protected $id;
-    
+
     /**
      * @ORM\Column
      * @var string $command
@@ -42,17 +42,6 @@ class CronJob
      * @var boolean $enabled
      */
     protected $enabled;
-    
-    /**
-     * @ORM\OneToMany(targetEntity="CronJobResult", mappedBy="job", cascade={"remove"})
-     * @var \Doctrine\Common\Collections\ArrayCollection
-     */
-    protected $results;
-    /**
-     * @ORM\OneToOne(targetEntity="CronJobResult")
-     * @var CronJobResult
-     */
-    protected $mostRecentRun;
 
     public function __construct()
     {
@@ -147,46 +136,6 @@ class CronJob
     public function getNextRun()
     {
         return $this->nextRun;
-    }
-
-    /**
-     * Add results
-     *
-     * @param \ColourStream\Bundle\CronBundle\Entity\CronJobResult $results
-     */
-    public function addCronJobResult(\ColourStream\Bundle\CronBundle\Entity\CronJobResult $results)
-    {
-        $this->results[] = $results;
-    }
-
-    /**
-     * Get results
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getResults()
-    {
-        return $this->results;
-    }
-
-    /**
-     * Set mostRecentRun
-     *
-     * @param \ColourStream\Bundle\CronBundle\Entity\CronJobResult $mostRecentRun
-     */
-    public function setMostRecentRun(\ColourStream\Bundle\CronBundle\Entity\CronJobResult $mostRecentRun)
-    {
-        $this->mostRecentRun = $mostRecentRun;
-    }
-
-    /**
-     * Get mostRecentRun
-     *
-     * @return \ColourStream\Bundle\CronBundle\Entity\CronJobResult
-     */
-    public function getMostRecentRun()
-    {
-        return $this->mostRecentRun;
     }
 
     /**
