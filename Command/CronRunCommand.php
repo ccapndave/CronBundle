@@ -60,6 +60,9 @@ class CronRunCommand extends ContainerAwareCommand
         {
             $this->runJob($job, $output, $em);
         }
+        
+        // Write any changes to the database
+        $em->flush();
 
         $end = microtime(true);
         $duration = sprintf("%0.2f", $end-$start);
